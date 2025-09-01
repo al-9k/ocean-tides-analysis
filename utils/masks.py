@@ -7,7 +7,7 @@ def load_mask(path):
     valid_mask = (mask_channel == 255)
     return valid_mask, mask_channel.shape
 
-valid_mask, shape = load_mask(path = 'SIR.png')
+valid_mask, shape = load_mask(path = './utils/SIR.png')
 
 
 def generate_circle_mask(shape, center=None, radius=450):
