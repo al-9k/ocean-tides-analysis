@@ -30,7 +30,7 @@ import pandas as pd
 import xarray as xr
 
 
-DATE_RE = re.compile(r"(\d{4}-\d{2}-\d{2})\.nc$")
+DATE_RE = re.compile(r"(\d{4}\d{2}\d{2})\.nc$")
 
 
 def extract_date_from_path(path: str) -> pd.Timestamp:
