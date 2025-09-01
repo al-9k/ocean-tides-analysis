@@ -1,12 +1,3 @@
-# utils/genfield.py
-
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.signal import correlate2d
-
-from utils.masks import *
-from config.params import *
-
 def genfield(image1, image2, valid_mask, dt, meters_per_pixel,
              circle_mask, plot=True, image1_name=None, image2_name=None,
              save_path=None, return_grids=False):
@@ -29,7 +20,10 @@ def genfield(image1, image2, valid_mask, dt, meters_per_pixel,
     u_grid = np.full((ny, nx), np.nan)
     v_grid = np.full((ny, nx), np.nan)
     coords = []
-    zeroes = []
+    angles = []
+    velocities = []
+    data = []
+
 
     if plot:
         fig, ax = plt.subplots(figsize=(12, 10))
@@ -108,6 +102,8 @@ def genfield(image1, image2, valid_mask, dt, meters_per_pixel,
         v_x = dx_m / dt
         v_y = dy_m / dt
         v_mag = np.sqrt(v_x**2 + v_y**2)
+        angle_deg = np.degrees(np.arctan2(v_y, v_x))  # compute angle
+
 
         if not (min_v < v_mag < max_v):
             v_x = 0
@@ -124,13 +120,26 @@ def genfield(image1, image2, valid_mask, dt, meters_per_pixel,
         u_grid[row, col] = v_x
         v_grid[row, col] = v_y
         coords.append((y, x))
+        angles.append(angle_deg)
+        velocities.append(v_mag)
+        data.append((angle_deg, y, x, v_y, v_x))
 
-        if plot:
-            if v_mag > 0:
-              ax.arrow(x * km_per_pixel, y * km_per_pixel,
-                      v_x * km_per_pixel, v_y * km_per_pixel,
-                      head_width=0.25, head_length=0.35,
-                      fc='orange', ec='orange', linewidth=2)            
+
+        # if plot:
+        #     if v_mag > 0:
+        #       ax.arrow(x * km_per_pixel, y * km_per_pixel,
+        #               v_x * km_per_pixel, v_y * km_per_pixel,
+        #               head_width=0.25, head_length=0.35,
+        #               fc='orange', ec='orange', linewidth=2)            
+
+    if len(angles) > 0:
+        median_angle = np.median(angles)
+        for angle_deg, y, x, v_y, v_x in data:
+            if np.abs(angle_deg - median_angle) < 45 and plot:
+                ax.arrow(x * km_per_pixel, y * km_per_pixel,
+                        v_x * km_per_pixel, v_y * km_per_pixel,
+                        head_width=0.25, head_length=0.35,
+                        fc='orange', ec='orange', linewidth=2)   
 
     if plot:
         plt.tight_layout()
