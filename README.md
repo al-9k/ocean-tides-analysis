@@ -34,7 +34,7 @@ python merger.py \
 
 Once the data is merged:  
 - You can open the provided Jupyter notebook to explore and analyze the data.  
-- A pre-merged file is already available under:
+- A pre-merged (though very slightly deprecated) file is already available under:
 
 ```
 output/merged/time_series_uv.nc
