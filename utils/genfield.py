@@ -1,11 +1,21 @@
+# utils/genfield.py 
+
+import numpy as np 
+import matplotlib.pyplot as plt 
+from scipy.signal import correlate2d 
+
+from utils.masks import * 
+from config.params import *
+
+
 def genfield(image1, image2, valid_mask, dt, meters_per_pixel,
              circle_mask, plot=True, image1_name=None, image2_name=None,
-             save_path=None, return_grids=False):
+             save_path=None, return_grids=False, normalize=False):
 
 
-
-    # image1 = (image1 - np.mean(image1)) / np.std(image1)
-    # image2 = (image2 - np.mean(image2)) / np.std(image2)
+    if normalize == True:
+        image1 = (image1 - np.mean(image1)) / np.std(image1)
+        image2 = (image2 - np.mean(image2)) / np.std(image2)
 
 
     h, w = image1.shape
@@ -23,6 +33,7 @@ def genfield(image1, image2, valid_mask, dt, meters_per_pixel,
     angles = []
     velocities = []
     data = []
+    zeroes = []
 
 
     if plot:
@@ -36,7 +47,7 @@ def genfield(image1, image2, valid_mask, dt, meters_per_pixel,
     for idx, (y, x) in enumerate(centers):
         row = idx // nx
         col = idx % nx
-        
+
         if not is_inside_radar_area(x, y, 450, 450, 450):
             continue
 
@@ -111,7 +122,7 @@ def genfield(image1, image2, valid_mask, dt, meters_per_pixel,
             v_mag = 0
             u_grid[row, col] = v_mag
             v_grid[row, col] = v_mag
-            coords.append((y, x))
+            zeroes.append((y, x))
             if plot:
                 ax.scatter(x * km_per_pixel, y * km_per_pixel, color='red', s=10)
 
@@ -130,16 +141,23 @@ def genfield(image1, image2, valid_mask, dt, meters_per_pixel,
         #       ax.arrow(x * km_per_pixel, y * km_per_pixel,
         #               v_x * km_per_pixel, v_y * km_per_pixel,
         #               head_width=0.25, head_length=0.35,
-        #               fc='orange', ec='orange', linewidth=2)            
+        #               fc='orange', ec='orange', linewidth=2)
 
     if len(angles) > 0:
         median_angle = np.median(angles)
-        for angle_deg, y, x, v_y, v_x in data:
-            if np.abs(angle_deg - median_angle) < 45 and plot:
-                ax.arrow(x * km_per_pixel, y * km_per_pixel,
-                        v_x * km_per_pixel, v_y * km_per_pixel,
-                        head_width=0.25, head_length=0.35,
-                        fc='orange', ec='orange', linewidth=2)   
+        new_coords = []
+
+        for i, (angle_deg, y, x, v_y, v_x) in enumerate(data):
+            if np.abs(angle_deg - median_angle) < 45:
+                if plot:
+                    ax.arrow(x * km_per_pixel, y * km_per_pixel,
+                            v_x * km_per_pixel, v_y * km_per_pixel,
+                            head_width=0.25, head_length=0.35,
+                            fc='orange', ec='orange', linewidth=2)
+                new_coords.append(coords[i])  # Keep this coordinate
+            # Else: skip adding the coordinate (effectively popping it)
+
+        coords = new_coords  # Update coords to only valid ones
 
     if plot:
         plt.tight_layout()
